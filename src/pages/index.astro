@@ -1,0 +1,258 @@
+---
+import books from "../../public/books.json";
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="generator" content={Astro.generator} />
+    <title>Books App</title>
+  </head>
+  <body>
+    <header class="flex justify-between items-center p-2">
+      <img class="w-[150px]" src="https://z-lib.io/img/logo.webp" alt="" />
+      <div>
+        <input
+          type="text"
+          placeholder="Search"
+          class="p-2 px-4 bg-gray-500 text-white rounded font-bold"
+        />
+        <button class="font-bold bg-blue-400 p-2 px-4 rounded text-white">
+          Search
+        </button>
+      </div>
+    </header>
+    <div class="flex justify-between items-center p-2">
+      <h2 class="font-bold text-lg">{books.length} Available Books</h2>
+      <button
+        class="font-bold bg-red-400 p-2 px-4 rounded text-white text-sm"
+        id="btnFavorites"
+      >
+        Cargando...
+      </button>
+    </div>
+    <div class="books grid grid-cols-3 gap-4 p-2">
+      {
+        books.map((book) => {
+          return (
+            <div class="book relative">
+              <img class="w-full rounded" src={book.image} />
+              <h2 class="font-bold text-base mt-2">{book.name}</h2>
+              <p class="absolute left-0 top-0 m-4 font-bold bg-black p-1 px-2 rounded-full text-white border border-white text-sm">
+                {book.id}
+              </p>
+              <button
+                id={book.id}
+                class="p-2 px-4 bg-gray-500 text-white rounded font-bold absolute top-0 right-0 m-3 shadow shadow-white"
+              >
+                Like
+              </button>
+            </div>
+          );
+        })
+      }
+    </div>
+    <div
+      class="fixed top-0 right-0 w-full h-full bg-black z-10 p-4 text-white sm:w-[80%] md:w-[60%] lg:w-[40%] xl:w-[30%] hidden"
+      id="booksFavoritesDiv"
+    >
+      <div class="flex justify-between items-center">
+        <h1 class="font-bold text-lg">Lista de favoritos</h1>
+        <button class="font-bold text-sm bg-red-600 p-2 px-4 rounded" id="btnCloseFavorites"
+          >Cerrar</button
+        >
+      </div>
+      <div id="booksFavorites" class="mt-4"></div>
+    </div>
+    <script define:vars={{ books }}>
+      // Mostrar el div de la lista de favoritos
+      const btnFavorites = document.getElementById("btnFavorites");
+      btnFavorites.addEventListener("click", () => {
+        const favoritesDiv = document.getElementById("booksFavoritesDiv");
+        favoritesDiv.classList.remove("hidden");
+      });
+
+      // Cerrar el div de la lista de favoritos
+      const btnCloseFavorites = document.getElementById("btnCloseFavorites");
+      btnCloseFavorites.addEventListener("click", () => {
+        const favoritesDiv = document.getElementById("booksFavoritesDiv");
+        favoritesDiv.classList.add("hidden");
+      });
+      // Obtener la lista de favoritos
+
+      // Crear el canal de comunicación para sincronización entre pestañas
+      const channel = new BroadcastChannel("books-channel");
+
+      // Obtener la lista de favoritos actualizada desde localStorage
+      const getFavorites = () =>
+        JSON.parse(localStorage.getItem("favorites")) || [];
+
+      // Actualizar el texto del botón de favoritos con la cantidad actual de libros favoritos
+      const updateFavoritesButton = (favorites) => {
+        const favoritesButton = document.getElementById("btnFavorites");
+        favoritesButton.textContent = `Favorites (${favorites.length})`;
+      };
+
+      // Actualizar el texto al cargar la página
+      updateFavoritesButton(getFavorites());
+
+      // Sincronizar el estado del botón de "Like" con el estado en localStorage
+      const syncLikeButtonState = (button, isLiked) => {
+        if (isLiked) {
+          button.classList.remove("bg-gray-500");
+          button.classList.add("bg-green-500");
+        } else {
+          button.classList.remove("bg-green-500");
+          button.classList.add("bg-gray-500");
+        }
+      };
+
+      // Función para crear y añadir un libro a la lista de favoritos en el DOM
+      const addBookToFavoritesDOM = (bookData) => {
+        const booksFavoritesContainer =
+          document.getElementById("booksFavorites");
+
+        // Crear un nuevo div para el libro favorito
+        const favoriteBookDiv = document.createElement("div");
+        favoriteBookDiv.id = `book-${bookData.id}`;
+        favoriteBookDiv.className = "flex items-center gap-2 mb-2";
+        favoriteBookDiv.innerHTML = `
+          <img class="w-[90px] rounded" src="${bookData.image}" />
+          <div>
+            <h1 class="font-bold text-lg">${bookData.name}</h1>  
+            <button class="font-bold bg-red-500 p-2 px-4 rounded text-white text-[10px]">
+              Eliminar
+            </button>
+          </div>
+        `;
+
+        booksFavoritesContainer.appendChild(favoriteBookDiv);
+
+        // Obtener el botón "Eliminar" recién creado
+        const removeButton = favoriteBookDiv.querySelector("button");
+
+        // Asignar el evento de clic para eliminar el libro de favoritos
+        removeButton.addEventListener("click", () => {
+          removeBookFromFavorites(bookData.id);
+        });
+      };
+
+      // Función para eliminar un libro de la lista de favoritos en el DOM
+      const removeBookFromFavoritesDOM = (bookId) => {
+        const bookElement = document.getElementById(`book-${bookId}`);
+        if (bookElement) {
+          bookElement.remove();
+        }
+      };
+
+      // Función para remover un libro de favoritos y actualizar el DOM
+      window.removeBookFromFavorites = (bookId) => {
+        // Obtener la lista actualizada de favoritos desde localStorage
+        const updatedFavorites = getFavorites();
+
+        // Remover el libro de la lista de favoritos
+        const index = updatedFavorites.indexOf(bookId);
+        if (index !== -1) {
+          updatedFavorites.splice(index, 1);
+          localStorage.setItem("favorites", JSON.stringify(updatedFavorites));
+
+          // Eliminar el libro del DOM de favoritos
+          removeBookFromFavoritesDOM(bookId);
+
+          // Actualizar el conteo del botón de favoritos
+          updateFavoritesButton(updatedFavorites);
+
+          // Sincronizar el estado del botón de "Like"
+          const likeButton = document.getElementById(bookId);
+          if (likeButton) syncLikeButtonState(likeButton, false);
+
+          // Enviar mensaje para sincronizar con otras pestañas
+          channel.postMessage({
+            action: "removeLike",
+            bookId: bookId,
+          });
+        }
+      };
+
+      // Mostrar la lista completa de libros favoritos en el DOM al cargar la página
+      const showFavoritesList = (favorites) => {
+        favorites.forEach((bookId) => {
+          // Buscar el libro en la lista de libros disponibles
+          const bookData = books.find((b) => b.id === bookId);
+
+          if (bookData) {
+            // Añadir el libro al DOM de favoritos
+            addBookToFavoritesDOM(bookData);
+          }
+        });
+      };
+
+      // Mostrar la lista de favoritos al cargar la página
+      showFavoritesList(getFavorites());
+
+      // Inicializar el estado de los botones de "Like" para cada libro
+      books.forEach((book) => {
+        const likeButton = document.getElementById(book.id);
+        const favoritesStorage = getFavorites();
+
+        // Verificar si el libro está en favoritos
+        const isLiked = favoritesStorage.includes(book.id);
+        syncLikeButtonState(likeButton, isLiked);
+
+        likeButton.addEventListener("click", () => {
+          // Obtener la lista actualizada de favoritos
+          const updatedFavorites = getFavorites();
+          const isCurrentlyLiked = updatedFavorites.includes(book.id);
+
+          if (!isCurrentlyLiked) {
+            // Añadir el libro a favoritos
+            updatedFavorites.push(book.id);
+            localStorage.setItem("favorites", JSON.stringify(updatedFavorites));
+
+            // Actualizar el estado del botón y el conteo de favoritos
+            syncLikeButtonState(likeButton, true);
+            updateFavoritesButton(updatedFavorites);
+
+            // Añadir el libro al DOM de favoritos
+            addBookToFavoritesDOM(book);
+
+            // Enviar mensaje para sincronizar con otras pestañas
+            channel.postMessage({
+              action: "toggleLike",
+              bookId: book.id,
+            });
+          } else {
+            // Remover el libro de favoritos
+            removeBookFromFavorites(book.id);
+          }
+        });
+      });
+
+      // Escuchar los mensajes enviados por el canal de comunicación
+      channel.onmessage = (event) => {
+        const { bookId, action } = event.data;
+        const likeButton = document.getElementById(bookId);
+
+        if (action === "toggleLike") {
+          syncLikeButtonState(likeButton, true);
+
+          // Añadir el libro al DOM de favoritos
+          const bookData = books.find((b) => b.id === bookId);
+          if (bookData) addBookToFavoritesDOM(bookData);
+        }
+
+        if (action === "removeLike") {
+          syncLikeButtonState(likeButton, false);
+
+          // Eliminar el libro del DOM de favoritos
+          removeBookFromFavoritesDOM(bookId);
+        }
+
+        // Actualizar el conteo de favoritos en todas las pestañas
+        updateFavoritesButton(getFavorites());
+      };
+    </script>
+  </body>
+</html>

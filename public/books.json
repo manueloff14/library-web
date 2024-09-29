@@ -1,0 +1,41 @@
+[
+  {
+    "id": 1,
+    "name": "Code: The Hidden Language of Computer Hardware and Software",
+    "image": "https://marketplace.canva.com/EAFutLMZJKs/1/0/1003w/canva-portada-libro-novela-suspenso-elegante-negro-wxuYB_sJtMw.jpg",
+    "generos": [
+      "acción",
+      "arte",
+      "programación"
+    ]
+  },
+  {
+    "id": 2,
+    "name": "Begin to Code with Python",
+    "image": "https://marketplace.canva.com/EAE_sBlqHmU/2/0/1003w/canva-portada-de-libro-misterio-recuerdos-negro-eW5RXgMKmuc.jpg",
+    "generos": [
+      "acción",
+      "arte",
+      "diseño"
+    ]
+  },
+  {
+    "id": 3,
+    "name": "The Nature of Code: Simulating Natural Systems with JavaScript",
+    "image": "https://marketplace.canva.com/EAFjNCKkDPI/1/0/1003w/canva-portada-de-libro-de-fantas%C3%ADa-dram%C3%A1tico-verde-Ct1fLal3ekY.jpg",
+    "generos": [
+      "acción",
+      "arte",
+      "programación"
+    ]
+  },
+  {
+    "id": 4,
+    "name": "The best practices for Clean Code",
+    "image": "https://marketplace.canva.com/EAFEL6G6JSU/1/0/1003w/canva-portada-de-libro-pdf-electr%C3%B3nico-digital-silueta-persona-rosa-azul-oS2hyQNbxmM.jpg",
+    "generos": [
+      "acción",
+      "código"
+    ]
+  }
+]
